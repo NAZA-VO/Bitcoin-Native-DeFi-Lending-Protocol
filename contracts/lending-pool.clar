@@ -10,7 +10,7 @@
 (use-trait liquidator-trait .liquidator-trait.liquidator-trait)
 
 ;; Constants
-(define-constant contract-owner tx-sender)
+;; Note: contract-owner should be set via set-admin after deployment
 (define-constant CONTRACT-ADDRESS .lending-pool)
 (define-constant err-owner-only (err u400))
 (define-constant err-insufficient-balance (err u401))
@@ -34,7 +34,7 @@
 (define-data-var protocol-paused bool false)
 (define-data-var total-deposits uint u0)
 (define-data-var total-borrows uint u0)
-(define-data-var admin principal contract-owner)
+(define-data-var admin principal tx-sender)
 
 ;; Verified liquidator contracts (using contract-hash for verification)
 (define-data-var verified-liquidator-hash (optional (buff 32)) none)
@@ -74,12 +74,13 @@
 
         ;; CLARITY 4: Get the hash of the liquidator contract's code
         ;; This ensures we only interact with verified, audited liquidation logic
-        (let ((hash-value 0x01))
-            ;; Mock hash
-            (begin
-                (var-set verified-liquidator-hash (some hash-value))
-                (ok hash-value)
-            )
+        (match (contract-hash? liquidator)
+            hash-value
+                (begin
+                    (var-set verified-liquidator-hash (some hash-value))
+                    (ok hash-value)
+                )
+            err-contract-verification-failed
         )
     )
 )
@@ -88,7 +89,11 @@
 (define-private (is-liquidator-verified (liquidator principal))
     (match (var-get verified-liquidator-hash)
         expected-hash
-        true ;; Always verify for now since contract-hash? is unavailable
+            (match (contract-hash? liquidator)
+                current-hash
+                    (is-eq current-hash expected-hash)
+                false
+            )
         false
     )
 )
