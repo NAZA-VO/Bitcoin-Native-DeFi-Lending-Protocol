@@ -77,7 +77,7 @@
                 contract
                 (match (contract-hash? contract)
                     hash-value (some hash-value)
-                    none
+                    err none
                 )
                 none
             )))
@@ -198,7 +198,8 @@
                         (match (contract-hash? target)
                             current-hash
                                 (asserts! (is-eq current-hash expected-hash) err-invalid-contract-hash)
-                            (asserts! false err-invalid-contract-hash)
+                            err
+                                (asserts! false err-invalid-contract-hash)
                         )
                     true
                 )
