@@ -16,14 +16,19 @@
         ;; Calculate total amount needed (debt + bonus)
         (total-needed (+ debt-amount (/ (* debt-amount LIQUIDATION-BONUS-BPS) u10000)))
     )
-        ;; In a real implementation, this would:
-        ;; 1. Verify caller is the lending pool
-        ;; 2. Pay off the debt
-        ;; 3. Seize the collateral
-        ;; 4. Swap collateral for profit
+        ;; Note: The actual liquidation logic is handled by the lending pool contract
+        ;; This contract is called by the lending pool with restrict-assets? protection
+        ;; The lending pool will:
+        ;; 1. Verify this contract using contract-hash?
+        ;; 2. Set asset restrictions using restrict-assets?
+        ;; 3. Transfer collateral to this contract
+        ;; 4. This contract can then process the liquidation (swap, etc.)
         
-        ;; For now, we'll just return success
-        ;; The lending pool's restrict-assets? ensures we can't move more than allowed
+        ;; Validate inputs
+        (asserts! (> debt-amount u0) err-liquidation-failed)
+        (asserts! (> total-needed u0) err-liquidation-failed)
+        
+        ;; Return the amount that will be received (debt + bonus)
         (ok total-needed)
     )
 )
@@ -34,8 +39,13 @@
 )
 
 ;; Check if a position can be liquidated
-;; (simplified - in real implementation would check with oracle)
+;; Note: This is a simplified check - in production, this would:
+;; 1. Query the lending pool for the borrower's health factor
+;; 2. Check with price oracle for asset prices
+;; 3. Verify liquidation is profitable
 (define-public (can-liquidate (borrower principal))
+    ;; For now, return true - actual check should be done by calling lending pool
+    ;; This function exists to satisfy the trait interface
     (ok true)
 )
 

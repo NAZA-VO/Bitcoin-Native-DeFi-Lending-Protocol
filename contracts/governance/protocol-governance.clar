@@ -220,13 +220,15 @@
 (define-read-only (get-proposal-status-ascii (proposal-id uint))
     (match (map-get? proposals { proposal-id: proposal-id })
         proposal (let (
-                (votes-for-ascii "VOTES_FOR_ASCII")
-                (votes-against-ascii "VOTES_AGAINST_ASCII")
+                (votes-for-val (get votes-for proposal))
+                (votes-against-val (get votes-against proposal))
                 (time-left (if (> (get execution-time proposal) stacks-block-time)
                     (- (get execution-time proposal) stacks-block-time)
                     u0
                 ))
-                (time-left-ascii "TIME_LEFT_ASCII")
+                (votes-for-ascii (unwrap! (to-ascii? votes-for-val) "0"))
+                (votes-against-ascii (unwrap! (to-ascii? votes-against-val) "0"))
+                (time-left-ascii (unwrap! (to-ascii? time-left) "0"))
                 (status (if (get executed proposal)
                     "EXECUTED"
                     (if (get cancelled proposal)
