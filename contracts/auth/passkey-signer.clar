@@ -51,9 +51,9 @@
     )
     (let (
             ;; CLARITY 4: Convert user principal to ASCII
-            (user-str "USER_ASCII")
+            (user-str (unwrap! (to-ascii? user) "unknown"))
             ;; CLARITY 4: Convert amount to ASCII
-            (amount-str "AMOUNT_ASCII")
+            (amount-str (unwrap! (to-ascii? amount) "0"))
         )
         ;; Return human-readable challenge message
         (ok {
@@ -81,7 +81,7 @@
         (if (is-eq key-index u0)
             (map-set user-passkeys { user: tx-sender } {
                 public-key: public-key,
-                registered-at: stacks-block-height,
+                registered-at: stacks-block-time,
                 device-name: device-name,
             })
             true
@@ -119,8 +119,7 @@
         )
         ;; CLARITY 4: Use secp256r1-verify for passkey verification
         ;; This enables hardware wallet and biometric authentication
-        (asserts! true err-invalid-signature)
-        ;; Mocking secp256r1-verify
+        (asserts! (secp256r1-verify message-hash signature public-key) err-invalid-signature)
         (ok true)
     )
 )
