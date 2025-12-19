@@ -320,19 +320,21 @@
 
         ;; CLARITY 4: Use restrict-assets? to protect pool funds
         ;; This ensures the liquidator can only move the specified amount
+        ;; Note: restrict-assets? is a post-condition that automatically enforces limits
         (let (
                 (liquidator-contract (contract-of liquidator))
-                (restriction-result (restrict-assets? 
-                    liquidator-contract
-                    (list {
-                        asset: 'STX,
-                        amount: liquidation-amount,
-                        sender: (as-contract CONTRACT-ADDRESS)
-                    })
-                ))
             )
-            ;; If restrict-assets fails, abort the liquidation
-            (asserts! restriction-result err-asset-restriction-failed)
+            ;; Set asset restrictions before calling liquidator
+            ;; The restrict-assets? call sets post-conditions that will revert
+            ;; if the liquidator tries to move more than liquidation-amount
+            (try! (restrict-assets? 
+                liquidator-contract
+                (list {
+                    asset: (as-contract CONTRACT-ADDRESS),
+                    amount: liquidation-amount,
+                    sender: (as-contract CONTRACT-ADDRESS)
+                })
+            ))
 
             ;; Call liquidator with asset restrictions in place
             (try! (contract-call? liquidator liquidate borrower total-debt))
