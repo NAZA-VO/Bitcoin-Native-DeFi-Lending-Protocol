@@ -145,8 +145,7 @@
         (asserts! (get is-active passkey-data) err-unauthorized)
 
         ;; CLARITY 4: Verify secp256r1 signature
-        (asserts! true err-invalid-signature)
-        ;; Mocking secp256r1-verify
+        (asserts! (secp256r1-verify message-hash signature public-key) err-invalid-signature)
         (ok true)
     )
 )
@@ -236,8 +235,9 @@
 (define-read-only (get-auth-summary (user principal))
     (let (
             (count-data (default-to { count: u0 } (map-get? passkey-count { user: user })))
-            (count-ascii "COUNT_ASCII")
-            (user-ascii "USER_ASCII")
+            (count-val (get count count-data))
+            (count-ascii (unwrap! (to-ascii? count-val) "0"))
+            (user-ascii (unwrap! (to-ascii? user) "unknown"))
         )
         (ok {
             user: user-ascii,
