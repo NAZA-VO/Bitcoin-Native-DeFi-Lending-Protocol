@@ -305,7 +305,15 @@
         ;; CLARITY 4: Use restrict-assets? to protect pool funds
         ;; This ensures the liquidator can only move the specified amount
         (let (
-                (restriction-result true) ;; Mock restriction result
+                (liquidator-contract (contract-of liquidator))
+                (restriction-result (restrict-assets? 
+                    liquidator-contract
+                    (list {
+                        asset: 'STX,
+                        amount: liquidation-amount,
+                        sender: (as-contract CONTRACT-ADDRESS)
+                    })
+                ))
             )
             ;; If restrict-assets fails, abort the liquidation
             (asserts! restriction-result err-asset-restriction-failed)
@@ -313,11 +321,17 @@
             ;; Call liquidator with asset restrictions in place
             (try! (contract-call? liquidator liquidate borrower total-debt))
 
+            ;; Transfer collateral to liquidator (with bonus)
+            (try! (stx-transfer? liquidation-amount CONTRACT-ADDRESS (contract-of liquidator)))
+
             ;; Clear borrower's loan
             (map-delete user-loans { user: borrower })
 
-            ;; Transfer collateral to liquidator
+            ;; Clear borrower's collateral
             (map-delete user-collateral { user: borrower })
+
+            ;; Update total borrows
+            (var-set total-borrows (- (var-get total-borrows) total-debt))
 
             (ok true)
         )
@@ -350,10 +364,12 @@
 (define-read-only (get-loan-status-ascii (user principal))
     (match (map-get? user-loans { user: user })
         loan-data (let (
-                (principal-ascii "PRINCIPAL_ASCII")
-                (interest-ascii "INTEREST_ASCII")
+                (principal-amt (get principal-amount loan-data))
+                (interest-amt (unwrap-panic (calculate-current-interest user)))
                 (health (unwrap-panic (get-health-factor user)))
-                (health-ascii "HEALTH_ASCII")
+                (principal-ascii (unwrap! (to-ascii? principal-amt) "0"))
+                (interest-ascii (unwrap! (to-ascii? interest-amt) "0"))
+                (health-ascii (unwrap! (to-ascii? health) "0"))
             )
             (ok {
                 principal: principal-ascii,
