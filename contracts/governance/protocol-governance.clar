@@ -57,7 +57,7 @@
     }
 )
 
-;; CLARITY 4 FEATURE: Create proposal with time-locked execution
+;; Create proposal with time-locked execution
 ;; Proposals can only be executed after TIMELOCK-PERIOD has passed
 (define-public (create-proposal
         (title (string-ascii 100))
@@ -104,7 +104,7 @@
     )
 )
 
-;; Vote on a proposal
+
 ;; CLARITY 4: Tracks vote time using stacks-block-time
 (define-public (vote
         (proposal-id uint)
