@@ -1,6 +1,5 @@
 ;; Protocol Governance Contract
 ;; ============================
-;; CLARITY 4 FEATURES SHOWCASED:
 ;; - stacks-block-time: Time-locked proposal execution
 ;; - contract-hash?: Verify new contract implementations before upgrade
 ;; - to-ascii?: Generate human-readable proposal descriptions
